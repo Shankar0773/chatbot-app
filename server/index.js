@@ -16,6 +16,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
   baseURL: 'https://openrouter.ai/api/v1',
   defaultHeaders: {
+    Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, // Add Authorization header
     'HTTP-Referer': 'http://localhost:3000/', // your frontend domain
     'X-Title': 'My Chatbot Project'           // optional
   }
@@ -41,7 +42,19 @@ app.post('/api/chat', async (req, res) => {
       ]
     });
 
-    res.json({ reply: completion.choices[0].message.content });
+    // Validate response structure
+    if (
+      completion &&
+      completion.choices &&
+      completion.choices[0] &&
+      completion.choices[0].message &&
+      completion.choices[0].message.content
+    ) {
+      res.json({ reply: completion.choices[0].message.content });
+    } else {
+      console.error('Unexpected API response:', completion);
+      res.status(500).json({ error: 'Unexpected API response. Please try again later.' });
+    }
   } catch (err) {
     console.error('OpenRouter API Error:', err);
     res.status(500).json({ error: 'Internal server error. Please try again later.' });
